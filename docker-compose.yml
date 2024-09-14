@@ -1,0 +1,11 @@
+services:
+    nginx:
+        image: hello-podlodka-nginx:0.0.1
+        environment:
+            PHP_FPM_HOST: php-fpm
+        ports:
+            - 80:80
+        depends_on:
+            - php-fpm
+    php-fpm:
+        image: hello-podlodka-php-fpm:0.0.1
