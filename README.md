@@ -103,7 +103,6 @@ kubectl apply -f k8s/hello-podlodka.yaml
 
 Число pod должно обновиться в соответствии с настройкой.
 
-
 Удаляем всё, что создали
 ```bash
 kubectl delete -f k8s/hello-podlodka.yaml
@@ -114,4 +113,21 @@ kubectl delete -f k8s/hello-podlodka.yaml
 kubectl get deployments
 kubectl get replicasets
 kubectl get pods
+```
+
+## Service
+
+Применяем конфиг нашего приложения
+```bash
+kubectl apply -f k8s/hello-podlodka.yaml
+```
+
+```
+kubectl get services
+```
+
+Должно быть примерно так
+```
+NAME                            TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+hello-podlodka-php-service      ClusterIP   10.104.37.12     <none>        80/TCP     10s
 ```
