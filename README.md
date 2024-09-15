@@ -131,3 +131,39 @@ kubectl get services
 NAME                            TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
 hello-podlodka-php-service      ClusterIP   10.104.37.12     <none>        80/TCP     10s
 ```
+
+## Ingress
+
+Включаем контроллер Ingress в кластере
+```bash
+minikube addons enable ingress
+```
+
+Применяем конфиг нашего приложения
+```bash
+kubectl apply -f k8s/hello-podlodka.yaml
+```
+
+```
+kubectl get ingress
+```
+
+Должно быть примерно так
+```
+NAME             CLASS   HOSTS                ADDRESS        PORTS   AGE
+hello-podlodka   nginx   hello-podlodka.lcl   192.168.49.2   80      20s
+```
+
+Прописываем в hosts (`sudo editor /etc/hosts`) полученный IP адрес 
+```
+192.168.49.2   hello-podlodka.lcl
+```
+
+Сайт должен открыться по адресу http://hello-podlodka.lcl:80
+
+Можно в отдельном терминале выполнить  
+```
+minikube dashboard
+```
+
+В dashboard можно увидеть все созданные объекты: Pod, Replicaset, Deployment, Service, Ingress. При закрытии терминала порт закроется, и dashboard станет недоступна.
