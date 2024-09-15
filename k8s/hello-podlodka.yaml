@@ -1,0 +1,28 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-podlodka-php
+  namespace: default
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: hello-podlodka-php
+  template:
+    metadata:
+      labels:
+        app: hello-podlodka-php
+    spec:
+      containers:
+        - name: nginx
+          image: hello-podlodka-nginx:0.0.1
+          imagePullPolicy: Never
+          env:
+            - name: PHP_FPM_HOST
+              value: 127.0.0.1
+          ports:
+            - containerPort: 80
+        - name: php-fpm
+          image: hello-podlodka-php-fpm:0.0.1
+          imagePullPolicy: Never
