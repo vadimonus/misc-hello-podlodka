@@ -8,4 +8,6 @@ services:
         depends_on:
             - php-fpm
     php-fpm:
-        image: hello-podlodka-php-fpm:0.0.1
+        image: hello-podlodka-php-fpm:0.0.2
+        environment:
+            SESSION_DRIVER: file

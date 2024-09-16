@@ -9,5 +9,7 @@
     </head>
     <body>
         <h1>Hello, Podlodka</h1>
+        <div>Hostname: {{ gethostname() }}</div>
+        <div>Clicks: {{ session()->get('clicks') }}</div>
     </body>
 </html>

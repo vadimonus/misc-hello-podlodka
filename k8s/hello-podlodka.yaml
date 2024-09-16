@@ -24,8 +24,12 @@ spec:
           ports:
             - containerPort: 80
         - name: php-fpm
-          image: hello-podlodka-php-fpm:0.0.1
+          image: hello-podlodka-php-fpm:0.0.2
           imagePullPolicy: Never
+          env:
+            - name: SESSION_DRIVER
+              value: file
+
 ---
 apiVersion: v1
 kind: Service

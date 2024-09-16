@@ -167,3 +167,32 @@ minikube dashboard
 ```
 
 В dashboard можно увидеть все созданные объекты: Pod, Replicaset, Deployment, Service, Ingress. При закрытии терминала порт закроется, и dashboard станет недоступна.
+
+# Локальные файлы и сессии 
+
+Соберем новую версию приложения и загрузим образ в кластер
+```bash
+docker build --file=docker/php-fpm/Dockerfile -t hello-podlodka-php-fpm:0.0.2 .
+minikube image load hello-podlodka-php-fpm:0.0.2
+kubectl apply -f k8s/hello-podlodka.yaml
+```
+
+Много раз обновляя страницу http://hello-podlodka.lcl:80 можно увидеть, что счетчик работает неправильно, потому что сессии хранятся не в общем хранилище, а на каждом узле отдельно.
+
+Аналогичный эффект можно наблюдать и в docker compose при использовании scale на странице http://localhost:80. 
+```
+docker compose up -d --scale php-fpm=3
+```
+
+Заменяем в `k8s/hello-podlodka.yaml` `SESSION_DRIVER=file` на `SESSION_DRIVER=cookie`. Тогда сессия будет храниться в cookie у клиента.
+```bash
+kubectl apply -f k8s/hello-podlodka.yaml
+```
+
+Открываем http://hello-podlodka.lcl:80. Перестав хранить сессии, приложение стало stateless. Счетчик теперь должен работать правильно, вне зависимости от того, на какой именно pod пришел запрос из браузера.  
+
+Удаляем приложение из кластера и выключаем docker compose
+```bash
+kubectl delete -f k8s/hello-podlodka.yaml
+docker compose down
+```
