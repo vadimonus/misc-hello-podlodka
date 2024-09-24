@@ -168,7 +168,7 @@ minikube dashboard
 
 В dashboard можно увидеть все созданные объекты: Pod, Replicaset, Deployment, Service, Ingress. При закрытии терминала порт закроется, и dashboard станет недоступна.
 
-# Локальные файлы и сессии 
+## Локальные файлы и сессии 
 
 Соберем новую версию приложения и загрузим образ в кластер
 ```bash
@@ -196,3 +196,18 @@ kubectl apply -f k8s/hello-podlodka.yaml
 kubectl delete -f k8s/hello-podlodka.yaml
 docker compose down
 ```
+
+# Создадим Helm chart
+
+```bash
+helm create k8s/hello-podlodka
+```
+
+Helm использует шаблоны из папки `templates` и подставляет в них переменные из `values.yaml` и `Chart.yaml`. Значения из `values.yaml` доступны в шаблоне в переменной `.Values`, из `Chart.yaml` в переменной `.Chart`.
+
+Посмотреть результат обработки шаблонов можно командой `helm template`
+```bash
+helm template k8s/hello-podlodka > k8s/hello-podlodka-helm.yaml
+```
+
+В полученном файле `k8s/hello-podlodka-helm.yaml` можно увидеть, среди прочего, Deployment и Service.
