@@ -212,7 +212,7 @@ helm template k8s/hello-podlodka > k8s/hello-podlodka-helm.yaml
 
 В полученном файле `k8s/hello-podlodka-helm.yaml` можно увидеть, среди прочего, Deployment и Service.
 
-# Опишем Pod
+## Опишем Pod
 
 Helm создал chart для одного контейнера. Но для php нужны отдельные контейнеры php-fpm и nginx. Отредактируем в `templates/deployment.yaml` секцию `spec.template.spec.containers`, скопировав строки 34-52.
 
@@ -240,3 +240,36 @@ Helm создал chart для одного контейнера. Но для ph
 helm template k8s/hello-podlodka > k8s/hello-podlodka-helm.yaml
 ```
 
+Добавим в `templates/deployment.yaml` секцию `spec.template.spec.containers.{{ .Chart.Name }}-nginx`
+```yaml
+    env:
+    - name: PHP_FPM_HOST
+      value: 127.0.0.1
+```
+
+Заменим в `values.yaml` `ingress.enabled` на `true` и пропишем в `host` значение `hello-podlodka.lcl`. В `replicaCount` пропишем `3`. Пропишем в `livenessProbe` и `readinessProbe` значение `/up` (healthcheck Laravel). 
+
+Проверим, что шаблонизация проходит без ошибок, и установим полученный chart.
+```
+helm template k8s/hello-podlodka > k8s/hello-podlodka-helm.yaml
+helm install hello-podlodka k8s/hello-podlodka
+```
+
+Должен быть примерно так
+```
+NAME: hello-podlodka
+LAST DEPLOYED: Tue Sep 24 12:51:33 2024
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+NOTES:
+1. Get the application URL by running these commands:
+  http://hello-podlodka.lcl/
+```
+
+Проверим приложение, открыв http://hello-podlodka.lcl:80. 
+
+Если что-то пошло не так, можно удалить приложение, чтобы попробовать заново.
+```bash
+helm delete hello-podlodka
+```
