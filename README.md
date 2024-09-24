@@ -197,7 +197,7 @@ kubectl delete -f k8s/hello-podlodka.yaml
 docker compose down
 ```
 
-# Создадим Helm chart
+## Создадим Helm chart
 
 ```bash
 helm create k8s/hello-podlodka
@@ -211,3 +211,32 @@ helm template k8s/hello-podlodka > k8s/hello-podlodka-helm.yaml
 ```
 
 В полученном файле `k8s/hello-podlodka-helm.yaml` можно увидеть, среди прочего, Deployment и Service.
+
+# Опишем Pod
+
+Helm создал chart для одного контейнера. Но для php нужны отдельные контейнеры php-fpm и nginx. Отредактируем в `templates/deployment.yaml` секцию `spec.template.spec.containers`, скопировав строки 34-52.
+
+Сделаем следующие замены
+
+|      Значение       |           nginx           |           php-fpm           |
+|:-------------------:|:-------------------------:|:---------------------------:|
+| `{{ .Chart.Name }}` | `{{ .Chart.Name }}-nginx` | `{{ .Chart.Name }}-php-fpm` |
+|   `.Values.image`   |   `.Values.imageNginx`    |     `.Values.imagePhp`      |
+| `.Values.resources` | `.Values.resourcesNginx`  |   `.Values.resourcesPhp`    |
+|        ports        |         оставить          |           убрать            |
+|    livenessProbe    |         оставить          |           убрать            |
+|   readinessProbe    |         оставить          |           убрать            |
+
+Отредактируем `values.yaml`. Вместо разделов image и resources, сделаем imageNginx, imagePhp, resourcesNginx, resourcesPhp.
+
+|    Значение     |         nginx          |         php-fpm          |
+|:---------------:|:----------------------:|:------------------------:|
+|      image      | `hello-podlodka-nginx` | `hello-podlodka-php-fpm` |
+| imagePullPolicy |        `Never`         |         `Never`          |
+|       tag       |        `0.0.1`         |         `0.0.2`          |
+
+Проверим результат, сравнив результат шаблонизации с конфигом kubernetes, сделанным вручную.
+```
+helm template k8s/hello-podlodka > k8s/hello-podlodka-helm.yaml
+```
+
