@@ -31,11 +31,11 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
-        - name: {{ .Chart.Name }}
+        - name: {{ .Chart.Name }}-nginx
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: "{{ .Values.imageNginx.repository }}:{{ .Values.imageNginx.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.imageNginx.pullPolicy }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
@@ -45,7 +45,18 @@ spec:
           readinessProbe:
             {{- toYaml .Values.readinessProbe | nindent 12 }}
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+            {{- toYaml .Values.resourcesNginx | nindent 12 }}
+          {{- with .Values.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+        - name: {{ .Chart.Name }}-php-fpm
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.imagePhp.repository }}:{{ .Values.imagePhp.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.imagePhp.pullPolicy }}
+          resources:
+            {{- toYaml .Values.resourcesPhp | nindent 12 }}
           {{- with .Values.volumeMounts }}
           volumeMounts:
             {{- toYaml . | nindent 12 }}
