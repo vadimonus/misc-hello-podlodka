@@ -36,6 +36,9 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.imageNginx.repository }}:{{ .Values.imageNginx.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.imageNginx.pullPolicy }}
+          env:
+            - name: PHP_FPM_HOST
+              value: 127.0.0.1
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
