@@ -314,3 +314,103 @@ redis:
 helm template k8s/hello-podlodka > k8s/hello-podlodka-helm.yaml
 helm upgrade hello-podlodka k8s/hello-podlodka
 ```
+
+## Автомаcштабирование
+
+По умолчанию в Kubernetes при масштабировании настроено ожидание в 1-2 минуты, а также сбор статистики потребления ресурсов раз в минуту. Чтобы локально было удобнее наблюдать, установим меньшие значения.
+```bash
+minikube start \
+  --extra-config=controller-manager.horizontal-pod-autoscaler-initial-readiness-delay=2s \
+  --extra-config=controller-manager.horizontal-pod-autoscaler-cpu-initialization-period=2s \
+  --extra-config=controller-manager.horizontal-pod-autoscaler-upscale-delay=2s \
+  --extra-config=controller-manager.horizontal-pod-autoscaler-downscale-delay=2s \
+  --extra-config=controller-manager.horizontal-pod-autoscaler-sync-period=2s\
+  --extra-config=controller-manager.horizontal-pod-autoscaler-downscale-stabilization=2s 
+
+minikube addons enable ingress
+minikube addons enable metrics-server
+```
+
+Команда `kubectl get apiservices` должна содержать строчку 
+```
+v1beta1.metrics.k8s.io                 kube-system/metrics-server   True        1m
+```
+
+Отредактируем настройки metrics-server
+```bash
+kubectl -n kube-system edit deployments.apps metrics-server
+```
+Заменим
+```
+--metric-resolution=60s
+```
+на (15 секунд - минимально возможное значение) 
+```
+--metric-resolution=15s
+```
+
+Проверим, что метрики собираются (может потребоваться немного подождать).
+```bash
+kubectl top pod
+```
+
+Должно быть примерно так. `m` в CPU означает одну тысячную. 
+```
+NAME                             CPU(cores)   MEMORY(bytes)   
+hello-podlodka-6bddd4664-kkl4q   17m          44Mi            
+hello-podlodka-6bddd4664-nj8vs   30m          60Mi            
+hello-podlodka-6bddd4664-vlszw   18m          60Mi            
+hello-podlodka-redis-master-0    18m          4Mi  
+```
+
+Установим `values.yaml` ограничения для ресурсов (должны превышать потребление без нагрузки), и включим автомасштабирование.
+```yaml
+resourcesNginx:
+  requests:
+    cpu: 10m
+resourcesPhp:
+  requests:
+    cpu: 100m
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+```
+
+Проверим, что шаблонизация проходит без ошибок, и установим полученный chart.
+```
+helm template k8s/hello-podlodka > k8s/hello-podlodka-helm.yaml
+helm upgrade hello-podlodka k8s/hello-podlodka
+```
+
+В Kubernetes должен появиться новый объект HorizontalPodAutoscaler
+```bash
+kubectl get hpa
+```
+
+Должно быть примерно так
+```
+NAME             REFERENCE                   TARGETS        MINPODS   MAXPODS   REPLICAS   AGE
+hello-podlodka   Deployment/hello-podlodka   cpu: 11%/80%   2         5         2          1m
+```
+
+Если в cpu значение `unknown`, нужно подождать, пока сервис метрик соберет метрики, либо где-то в предыдущих шагах произошла ошибка.
+
+Наблюдаем за списком pod
+```
+watch -n0.5 kubectl top pods
+```
+
+В другом терминале наблюдаем за HorizontalPodAutoscaler
+```
+watch -n0.5 kubectl get hpa
+```
+
+И в отдельном терминале делаем, чтобы создать нагрузку в течение 60 с.
+```
+wrk -t4 -c30 -d60s http://hello-podlodka.lcl/
+```
+
+Через некоторое время сервер мониторинга соберет обновленную статистику, и HorizontalPodAutoscaler увеличит количество pod. Через некоторое время после прекращения нагрузки количество pod снова уменьшится.
