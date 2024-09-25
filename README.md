@@ -273,3 +273,44 @@ NOTES:
 ```bash
 helm delete hello-podlodka
 ```
+
+## Добавим Redis
+
+Допишем в `Chart.yaml`
+
+```yaml
+dependencies:
+- repository: https://charts.bitnami.com/bitnami
+  name: redis
+  version: 20.1.4
+```
+
+Загрузим зависимости 
+```bash
+helm dependency update k8s/hello-podlodka
+```
+
+Пропишем deployment.yaml в контейнер `php-fpm`.
+```yaml
+env:
+  - name: SESSION_DRIVER
+    value: redis
+  - name: REDIS_CLIENT
+    value: predis
+  - name: REDIS_HOST
+    value: "{{ .Chart.Name }}-redis-master"
+```
+
+Добавим в `values.yaml` конфигурацию для redis. Полный список возможных параметров можно посмотреть в документации конкретного chart https://artifacthub.io/packages/helm/bitnami/redis#parameters.
+```yaml
+redis:
+  architecture: standalone
+  auth:
+    enabled: false
+```
+
+Проверим, что шаблонизация проходит без ошибок, и установим полученный chart.
+```
+helm template k8s/hello-podlodka > k8s/hello-podlodka-helm.yaml
+helm upgrade hello-podlodka k8s/hello-podlodka
+```
