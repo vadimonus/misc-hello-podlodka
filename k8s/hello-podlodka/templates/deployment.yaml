@@ -58,6 +58,13 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.imagePhp.repository }}:{{ .Values.imagePhp.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.imagePhp.pullPolicy }}
+          env:
+            - name: SESSION_DRIVER
+              value: redis
+            - name: REDIS_CLIENT
+              value: predis
+            - name: REDIS_HOST
+              value: {{ .Chart.Name }}-redis-master
           resources:
             {{- toYaml .Values.resourcesPhp | nindent 12 }}
           {{- with .Values.volumeMounts }}
